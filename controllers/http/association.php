@@ -29,6 +29,7 @@
  */
 class InstallControllerHttpAssociation extends InstallControllerHttp implements HttpConfigureInterface
 {
+    private $initialized = false;
     /**
      * {@inheritdoc}
      */
@@ -37,6 +38,7 @@ class InstallControllerHttpAssociation extends InstallControllerHttp implements 
         global $kernel;
 
         if ($kernel) {
+            $this->initialized = true;
             $container = $kernel->getContainer();
             dump($container);
             $service = $container->get('ps_accounts.installer');
@@ -49,6 +51,10 @@ class InstallControllerHttpAssociation extends InstallControllerHttp implements 
      */
     public function display(): void
     {
-        $this->displayContent('association');
+        if ($this->initialized) {
+            $this->displayContent('association');
+        } else {
+            $this->displayContent('association-uninitialized');
+        }
     }
 }
