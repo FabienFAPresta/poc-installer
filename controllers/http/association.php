@@ -35,7 +35,13 @@ class InstallControllerHttpAssociation extends InstallControllerHttp implements 
     public function process(): void
     {
         global $kernel;
-        dd($kernel);
+
+        if ($kernel) {
+            $container = $kernel->getContainer();
+            dump($container);
+            $service = $container->get('ps_accounts.installer');
+            dd($service);
+        }
     }
 
     /**

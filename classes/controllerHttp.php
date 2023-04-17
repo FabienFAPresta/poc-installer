@@ -98,6 +98,12 @@ class InstallControllerHttp
     private function initSteps()
     {
         $stepConfig = [
+            // TODO : Add more step dynamically
+            [
+                'name' => 'association',
+                'displayName' => $this->translator->trans('Associate your shop', [], 'Install'),
+                'controllerClass' => 'InstallControllerHttpAssociation',
+            ],
             [
                 'name' => 'welcome',
                 'displayName' => $this->translator->trans('Choose your language', [], 'Install'),
@@ -132,12 +138,6 @@ class InstallControllerHttp
                 'name' => 'process',
                 'displayName' => $this->translator->trans('Store installation', [], 'Install'),
                 'controllerClass' => 'InstallControllerHttpProcess',
-            ],
-            // TODO : Add more step dynamically
-            [
-                'name' => 'association',
-                'displayName' => $this->translator->trans('Associate your shop', [], 'Install'),
-                'controllerClass' => 'InstallControllerHttpAssociation',
             ],
         ];
 
