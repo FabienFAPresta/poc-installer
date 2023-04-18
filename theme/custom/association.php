@@ -3,6 +3,7 @@
 </div>
 
 <script>
+    window.contextPsAccounts = <?php echo json_encode($this->accountContext) ?>;
     /*********************
      * PrestaShop Account *
      * *******************/

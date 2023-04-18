@@ -29,7 +29,47 @@
  */
 class InstallControllerHttpAssociation extends InstallControllerHttp implements HttpConfigureInterface
 {
-    private $initialized = false;
+    private bool $initialized = false;
+    public array $accountContext = [];
+
+    /**
+     * Get the name of the admin directory.
+     *
+     * @return string
+     */
+    private function getAdminDir(): string
+    {
+        chdir(_PS_CORE_DIR_);
+        $directories = glob('admin*', GLOB_ONLYDIR);
+        return is_array($directories) ? $directories[0] : "";
+    }
+
+    /**
+     * Initialize context inside the installer
+     * @return void
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    private function initContext(): void
+    {
+        global $smarty;
+
+        Context::getContext()->shop = new Shop(1);
+        Shop::setContext(Shop::CONTEXT_SHOP, 1);
+        Configuration::loadConfiguration();
+        Context::getContext()->language = new Language((int) Configuration::get('PS_LANG_DEFAULT'));
+        Context::getContext()->country = new Country((int) Configuration::get('PS_COUNTRY_DEFAULT'));
+        Context::getContext()->currency = new Currency((int) Configuration::get('PS_CURRENCY_DEFAULT'));
+        Context::getContext()->cart = new Cart();
+        Context::getContext()->employee = new Employee(1);
+        define('_PS_SMARTY_FAST_LOAD_', true);
+        require_once _PS_ROOT_DIR_ . '/config/smarty.config.inc.php';
+
+        Context::getContext()->smarty = $smarty;
+
+        if (!defined('_PS_ADMIN_DIR_')) define('_PS_ADMIN_DIR_', $this->getAdminDir());
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -37,12 +77,29 @@ class InstallControllerHttpAssociation extends InstallControllerHttp implements 
     {
         global $kernel;
 
+        $this->initContext();
+
         if ($kernel) {
             $this->initialized = true;
+            $accountsService = null;
+
             $container = $kernel->getContainer();
-            dump($container);
-            $service = $container->get('ps_accounts.installer');
-            dd($service);
+
+            try {
+                $accountsFacade = $container->get('ps_accounts.facade');
+                //$accountsService = $accountsFacade->getPsAccountsService();
+            } catch (\PrestaShop\PsAccountsInstaller\Installer\Exception\InstallerException $e) {
+                $accountsInstaller = $container->get('ps_accounts.installer');
+                $accountsInstaller->install();
+                $accountsFacade = $container->get('ps_accounts.facade');
+                //$accountsService = $accountsFacade->getPsAccountsService();
+            }
+
+            // Avoid ps account presenter error while redefining a session
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_destroy();
+            }
+            $this->accountContext = $accountsFacade->getPsAccountsPresenter()->present();
         }
     }
 
